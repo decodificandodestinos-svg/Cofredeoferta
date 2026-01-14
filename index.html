@@ -1,130 +1,127 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador Cofre de Ofertas - v6</title>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <style>
-        :root { --shopee-red: #ff2d2d; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f0f0; display: flex; justify-content: center; padding: 20px; }
-        .main-container { display: flex; gap: 20px; max-width: 1000px; width: 100%; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .editor { flex: 1; display: flex; flex-direction: column; }
-        .editor h2 { color: var(--shopee-red); margin-bottom: 20px; text-transform: uppercase; }
-        label { font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; color: #555; }
-        input, textarea { padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        .upload-box { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 10px; cursor: pointer; margin-bottom: 15px; background: #fafafa; }
-        
-        .preview { flex: 1; display: flex; flex-direction: column; align-items: center; }
-        #post-design { width: 450px; height: 562px; background-image: url('feed.png'); background-size: 100% 100%; position: relative; border-radius: 10px; overflow: hidden; background-color: #fff; }
+<meta charset="UTF-8">
+<title>Cofre de Ofertas – Canvas</title>
 
-        /* Ajustado de 385px para 365px para subir os valores */
-        .content-area { position: absolute; top: 155px; left: 50%; transform: translateX(-50%); width: 360px; height: 365px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; padding-bottom: 10px; }
-        .img-display { width: 100%; height: 200px; object-fit: contain; margin-bottom: 10px; }
-        .text-desc { text-align: center; font-size: 13px; font-weight: 700; color: #333; text-transform: uppercase; line-height: 1.3; height: 55px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-        
-        .price-container { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: auto; }
-        .price-old { color: var(--shopee-red); text-decoration: line-through; font-weight: bold; font-size: 14px; margin-bottom: 4px; }
-        .promo-button { background: var(--shopee-red); color: white; width: 180px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-weight: 900; font-size: 20px; text-transform: uppercase; }
+<style>
+body {
+    background:#f0f0f0;
+    display:flex;
+    justify-content:center;
+    padding:20px;
+    font-family:Segoe UI, sans-serif;
+}
 
-        .download-btn { margin-top: 15px; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
-        .download-btn:disabled { background: #95a5a6; cursor: not-allowed; }
-        .download-btn:hover:not(:disabled) { background: #219150; }
-    </style>
+.container {
+    background:#fff;
+    padding:20px;
+    border-radius:16px;
+    display:flex;
+    gap:20px;
+}
+
+.controls {
+    width:300px;
+    display:flex;
+    flex-direction:column;
+}
+
+.controls input, .controls textarea {
+    margin-bottom:10px;
+    padding:10px;
+}
+
+canvas {
+    width:450px;
+    height:360px;
+    border-radius:10px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="main-container">
-    <div class="editor">
-        <h2>Cofre de Ofertas</h2>
-        <label>Produto</label>
-        <div class="upload-box" onclick="document.getElementById('inputImg').click()">
-            Clique para selecionar a imagem do produto
-            <input type="file" id="inputImg" hidden accept="image/*" onchange="updateImg(event)">
-        </div>
-        <label>Descrição (Até 3 linhas)</label>
-        <textarea id="inDesc" rows="3" placeholder="Ex: FONE BLUETOOTH 5.0&#10;SOM HI-FI PREMIUM&#10;FRETE GRÁTIS" oninput="update()"></textarea>
-        <label>Valor Antigo</label>
-        <input type="text" id="inOld" placeholder="199,90" oninput="update()">
-        <label>Valor Promocional</label>
-        <input type="text" id="inPromo" placeholder="89,90" oninput="update()">
-        <button class="download-btn" id="btnDownload" onclick="download()">BAIXAR IMAGEM DO POST</button>
-        <p id="statusMsg" style="font-size: 0.8rem; color: #666; margin-top: 10px; text-align: center; display: none;">Processando imagem de alta qualidade...</p>
-    </div>
+<div class="container">
 
-    <div class="preview">
-        <p style="color: #888; font-weight: bold;">PRÉ-VISUALIZAÇÃO</p>
-        <div id="post-design">
-            <div class="content-area">
-                <img id="viewImg" class="img-display" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
-                <div id="viewDesc" class="text-desc">SUA DESCRIÇÃO AQUI</div>
-                <div class="price-container">
-                    <div id="viewOld" class="price-old">VALOR ANTIGO</div>
-                    <div id="viewPromo" class="promo-button">VALOR</div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="controls">
+    <input type="file" id="imgInput" accept="image/*">
+    <textarea id="desc" placeholder="Descrição"></textarea>
+    <input id="oldPrice" placeholder="Valor antigo">
+    <input id="promoPrice" placeholder="Valor promo">
+    <button onclick="download()">BAIXAR</button>
+</div>
+
+<canvas id="canvas" width="1350" height="1080"></canvas>
+
 </div>
 
 <script>
-    function updateImg(event) {
-        const reader = new FileReader();
-        reader.onload = function() { document.getElementById('viewImg').src = reader.result; };
-        reader.readAsDataURL(event.target.files[0]);
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const bg = new Image();
+bg.src = "feed.png";
+
+let productImg = null;
+
+bg.onload = draw;
+
+imgInput.onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+
+    productImg = new Image();
+    productImg.onload = draw;
+    productImg.src = URL.createObjectURL(f);
+};
+
+["desc","oldPrice","promoPrice"].forEach(id =>
+    document.getElementById(id).oninput = draw
+);
+
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    if (bg.complete) ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+
+    if (productImg && productImg.complete) {
+        const maxW = 900;
+        const maxH = 450;
+        let w = productImg.width;
+        let h = productImg.height;
+        const ratio = Math.min(maxW/w, maxH/h);
+        w *= ratio;
+        h *= ratio;
+        ctx.drawImage(productImg,(canvas.width-w)/2,280,w,h);
     }
 
-    // Função auxiliar para formatar com R$ automaticamente
-    function formatCurrency(value) {
-        if (!value) return "";
-        let val = value.trim();
-        if (!val.startsWith("R$")) {
-            val = "R$ " + val;
-        }
-        return val;
-    }
+    ctx.fillStyle="#333";
+    ctx.font="bold 42px Segoe UI";
+    ctx.textAlign="center";
+    ctx.fillText(desc.value.toUpperCase(),canvas.width/2,760);
 
-    function update() {
-        document.getElementById('viewDesc').innerText = document.getElementById('inDesc').value.toUpperCase() || "DESCRIÇÃO DO PRODUTO";
-        
-        const oldVal = document.getElementById('inOld').value;
-        document.getElementById('viewOld').innerText = oldVal ? formatCurrency(oldVal) : "VALOR ANTIGO";
-        
-        const promoVal = document.getElementById('inPromo').value;
-        document.getElementById('viewPromo').innerText = promoVal ? formatCurrency(promoVal) : "VALOR";
-    }
+    ctx.fillStyle="#ff2d2d";
+    ctx.font="bold 36px Segoe UI";
+    ctx.fillText("R$ " + oldPrice.value,canvas.width/2,830);
 
-    async function download() {
-        const btn = document.getElementById('btnDownload');
-        const status = document.getElementById('statusMsg');
-        const area = document.querySelector("#post-design");
+    ctx.fillStyle="#fff";
+    ctx.fillRect(canvas.width/2-250,860,500,120);
 
-        btn.disabled = true;
-        status.style.display = 'block';
+    ctx.fillStyle="#ff2d2d";
+    ctx.font="bold 64px Segoe UI";
+    ctx.fillText("R$ " + promoPrice.value,canvas.width/2,940);
+}
 
-        try {
-            const canvas = await html2canvas(area, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: null,
-                logging: false
-            });
-
-            const link = document.createElement('a');
-            link.download = 'post-cofre-ofertas.png';
-            link.href = canvas.toDataURL('image/png', 1.0);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (err) {
-            console.error("Erro ao gerar imagem:", err);
-            alert("Erro ao baixar. Tente usar o navegador Chrome ou subir para um link público (Netlify/GitHub).");
-        } finally {
-            btn.disabled = false;
-            status.style.display = 'none';
-        }
-    }
+function download() {
+    canvas.toBlob(blob=>{
+        const a=document.createElement("a");
+        a.href=URL.createObjectURL(blob);
+        a.download="post.png";
+        a.click();
+    });
+}
 </script>
+
 </body>
 </html>
