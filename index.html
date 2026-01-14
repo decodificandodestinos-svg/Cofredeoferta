@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cofre de Ofertas – Canvas</title>
-
 <style>
 body {
     background:#f0f0f0;
@@ -13,7 +12,6 @@ body {
     padding:20px;
     font-family:Segoe UI, sans-serif;
 }
-
 .container {
     background:#fff;
     padding:20px;
@@ -22,29 +20,25 @@ body {
     gap:20px;
     flex-wrap: wrap;
 }
-
 .controls {
     width:300px;
     display:flex;
     flex-direction:column;
 }
-
 .controls input, .controls textarea, .controls button {
     margin-bottom:10px;
     padding:10px;
     font-size:16px;
 }
-
 canvas {
     border-radius:10px;
     background:#eee;
+    display:block;
     max-width:100%;
     height:auto;
-    display:block;
 }
 </style>
 </head>
-
 <body>
 
 <div class="container">
@@ -70,21 +64,31 @@ bg.src = "feed.png";
 
 let productImg = null;
 
-// Ajusta o canvas para retina / Android
+// Tamanho base do canvas (proporção 1350x1080)
+const BASE_WIDTH = 1350;
+const BASE_HEIGHT = 1080;
+
+// Ajusta canvas para a tela mantendo proporção
 function resizeCanvas() {
     const ratio = window.devicePixelRatio || 1;
-    canvas.width = 1350 * ratio;
-    canvas.height = 1080 * ratio;
-    canvas.style.width = "450px";
-    canvas.style.height = "360px";
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    // largura máxima disponível
+    const maxWidth = window.innerWidth - 80; // margem do container
+    const scale = Math.min(maxWidth / BASE_WIDTH, 1); // escala proporcional
+
+    canvas.width = BASE_WIDTH * ratio * scale;
+    canvas.height = BASE_HEIGHT * ratio * scale;
+    canvas.style.width = (BASE_WIDTH * scale) + "px";
+    canvas.style.height = (BASE_HEIGHT * scale) + "px";
+
+    ctx.setTransform(ratio * scale, 0, 0, ratio * scale, 0, 0);
     draw();
 }
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// Carrega imagem do produto
+// Carrega produto
 imgInput.onchange = e => {
     const f = e.target.files[0];
     if (!f) return;
@@ -99,47 +103,46 @@ imgInput.onchange = e => {
 );
 
 function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0,0,BASE_WIDTH,BASE_HEIGHT);
 
-    // Fundo
-    if (bg.complete) ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+    // fundo
+    if (bg.complete) ctx.drawImage(bg,0,0,BASE_WIDTH,BASE_HEIGHT);
 
-    // Produto
+    // produto
     if (productImg && productImg.complete) {
         const maxW = 900;
         const maxH = 450;
         let w = productImg.width;
         let h = productImg.height;
 
-        // mantém proporção
         const ratio = Math.min(maxW / w, maxH / h);
         w *= ratio;
         h *= ratio;
 
-        ctx.drawImage(productImg, (canvas.width - w)/2, 280, w, h);
+        ctx.drawImage(productImg, (BASE_WIDTH - w)/2, 280, w, h);
     }
 
-    // Texto descrição
+    // descrição
     ctx.fillStyle="#333";
     ctx.font="bold 42px Segoe UI";
     ctx.textAlign="center";
-    ctx.fillText(desc.value.toUpperCase(), canvas.width/2, 760);
+    ctx.fillText(desc.value.toUpperCase(), BASE_WIDTH/2, 760);
 
-    // Preço antigo
+    // preço antigo
     ctx.fillStyle="#ff2d2d";
     ctx.font="bold 36px Segoe UI";
-    ctx.fillText("R$ " + oldPrice.value, canvas.width/2, 830);
+    ctx.fillText("R$ " + oldPrice.value, BASE_WIDTH/2, 830);
 
-    // Caixa preço promocional
+    // caixa preço promo
     ctx.fillStyle="#fff";
-    ctx.fillRect(canvas.width/2-250, 860, 500, 120);
+    ctx.fillRect(BASE_WIDTH/2-250, 860, 500, 120);
 
     ctx.fillStyle="#ff2d2d";
     ctx.font="bold 64px Segoe UI";
-    ctx.fillText("R$ " + promoPrice.value, canvas.width/2, 940);
+    ctx.fillText("R$ " + promoPrice.value, BASE_WIDTH/2, 940);
 }
 
-// Baixar imagem
+// baixar imagem
 function download() {
     canvas.toBlob(blob=>{
         const a=document.createElement("a");
