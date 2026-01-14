@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gerador Cofre de Ofertas - v6 FIX</title>
+<title>Gerador Cofre de Ofertas - FIX FINAL</title>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
@@ -84,30 +84,35 @@ input, textarea {
     background-color: #fff;
 }
 
-/* SEM transform — seguro para html2canvas */
 .content-area {
     position: absolute;
     top: 155px;
     left: 0;
     right: 0;
-    margin: 0 auto;
+    margin: auto;
     width: 360px;
     height: 365px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-sizing: border-box;
-    padding-bottom: 10px;
 }
 
-/* CORREÇÃO DEFINITIVA DA PROPORÇÃO */
-.img-display {
+/* CONTAINER TRAVA PROPORÇÃO */
+.img-wrapper {
     width: 100%;
-    height: auto;
     max-height: 200px;
-    object-fit: contain;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.img-display {
+    max-width: 100%;
+    max-height: 200px;
+    width: auto;
+    height: auto;
     display: block;
-    margin-bottom: 10px;
 }
 
 .text-desc {
@@ -121,7 +126,7 @@ input, textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 10px;
+    margin: 10px 0;
 }
 
 .price-container {
@@ -151,7 +156,6 @@ input, textarea {
     border-radius: 12px;
     font-weight: 900;
     font-size: 20px;
-    text-transform: uppercase;
 }
 
 .download-btn {
@@ -165,11 +169,6 @@ input, textarea {
     cursor: pointer;
     width: 100%;
 }
-
-.download-btn:disabled {
-    background: #95a5a6;
-    cursor: not-allowed;
-}
 </style>
 </head>
 
@@ -181,21 +180,21 @@ input, textarea {
     <h2>Cofre de Ofertas</h2>
 
     <label>Produto</label>
-    <div class="upload-box" onclick="document.getElementById('inputImg').click()">
+    <div class="upload-box" onclick="inputImg.click()">
         Clique para selecionar a imagem do produto
-        <input type="file" id="inputImg" hidden accept="image/*" onchange="updateImg(event)">
+        <input type="file" id="inputImg" hidden accept="image/*">
     </div>
 
     <label>Descrição</label>
-    <textarea id="inDesc" rows="3" placeholder="Descrição do produto" oninput="update()"></textarea>
+    <textarea id="inDesc" rows="3" oninput="update()"></textarea>
 
     <label>Valor Antigo</label>
-    <input type="text" id="inOld" placeholder="199,90" oninput="update()">
+    <input type="text" id="inOld" oninput="update()">
 
     <label>Valor Promocional</label>
-    <input type="text" id="inPromo" placeholder="89,90" oninput="update()">
+    <input type="text" id="inPromo" oninput="update()">
 
-    <button class="download-btn" id="btnDownload" onclick="download()">BAIXAR IMAGEM</button>
+    <button class="download-btn" onclick="download()">BAIXAR IMAGEM</button>
 </div>
 
 <div class="preview">
@@ -203,13 +202,20 @@ input, textarea {
 
     <div id="post-design">
         <div class="content-area">
-            <img id="viewImg" class="img-display"
-                 src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
+
+            <div class="img-wrapper">
+                <img id="viewImg"
+                     class="img-display"
+                     src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
+            </div>
+
             <div id="viewDesc" class="text-desc">DESCRIÇÃO DO PRODUTO</div>
+
             <div class="price-container">
                 <div id="viewOld" class="price-old">VALOR ANTIGO</div>
                 <div id="viewPromo" class="promo-button">VALOR</div>
             </div>
+
         </div>
     </div>
 </div>
@@ -217,44 +223,42 @@ input, textarea {
 </div>
 
 <script>
-function updateImg(event) {
-    const file = event.target.files[0];
+inputImg.onchange = e => {
+    const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-        document.getElementById('viewImg').src = reader.result;
+    const img = viewImg;
+    img.onload = () => {
+        img.style.width = "auto";
+        img.style.height = "auto";
     };
-    reader.readAsDataURL(file);
-}
 
-function formatCurrency(v) {
-    if (!v) return "";
-    return v.startsWith("R$") ? v : "R$ " + v;
+    const reader = new FileReader();
+    reader.onload = () => img.src = reader.result;
+    reader.readAsDataURL(file);
+};
+
+function format(v) {
+    return v ? (v.startsWith("R$") ? v : "R$ " + v) : "";
 }
 
 function update() {
     viewDesc.innerText = inDesc.value.toUpperCase() || "DESCRIÇÃO DO PRODUTO";
-    viewOld.innerText = inOld.value ? formatCurrency(inOld.value) : "VALOR ANTIGO";
-    viewPromo.innerText = inPromo.value ? formatCurrency(inPromo.value) : "VALOR";
+    viewOld.innerText = format(inOld.value) || "VALOR ANTIGO";
+    viewPromo.innerText = format(inPromo.value) || "VALOR";
 }
 
 async function download() {
-    const area = document.getElementById("post-design");
-
-    const canvas = await html2canvas(area, {
-        scale: window.devicePixelRatio,
-        useCORS: true,
-        allowTaint: true,
+    const canvas = await html2canvas(document.getElementById("post-design"), {
+        scale: 2,
         backgroundColor: null,
-        removeContainer: true,
-        imageTimeout: 0
+        useCORS: true
     });
 
-    const link = document.createElement("a");
-    link.download = "post-cofre-ofertas.png";
-    link.href = canvas.toDataURL("image/png", 1.0);
-    link.click();
+    const a = document.createElement("a");
+    a.download = "post-cofre-ofertas.png";
+    a.href = canvas.toDataURL("image/png", 1.0);
+    a.click();
 }
 </script>
 
